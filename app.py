@@ -133,34 +133,46 @@ tab_exec, tab_dept, tab_hr, tab_impact = st.tabs([
 # ------------------------------------------
 
 with tab_exec:
-    st.subheader("Key Organizational Indicators (KPIs)")
+    st.write("### 🌍 Global Foundation Impact")
+    st.caption("Aggregated community impact metrics across all active field operations.")
     
-    # Calculate live metrics
-    total_volunteers = len(df_master)
-    good_standing_count = len(df_master[df_master["SOP_Status"] == "GOOD STANDING"])
-    good_standing_pct = (good_standing_count / total_volunteers * 100) if total_volunteers > 0 else 0
-    total_events_logged = int(df_master["Total_Events"].sum())
+    # 1. Calculate Global Impact Metrics
+    total_beneficiaries = int(df_drives["No. of Beneficiaries"].sum())
+    total_students = len(df_edu_safe)
+    families_approached = int(df_edu_survey["Families Approached"].sum())
     
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total Active Roster", f"{total_volunteers} Members")
-    col2.metric("Good Standing Rate", f"{good_standing_pct:.1f}%")
-    col3.metric("Total Drive Logs", f"{total_events_logged} Logs")
-    col4.metric("Active Departments", f"{df_master['Department'].nunique()}")
+    # 2. Calculate the "Hero" Metric
+    total_impact = total_beneficiaries + total_students + families_approached
     
+    # 3. Render the Hero Section
+    with st.container(border=True):
+        st.metric("Total Community Members Impacted (Est.)", f"{total_impact} ❤️")
+    
+    col_exec1, col_exec2, col_exec3 = st.columns(3)
+    with col_exec1.container(border=True):
+        st.metric("Drive Beneficiaries", f"{total_beneficiaries} 🤝")
+    with col_exec2.container(border=True):
+        st.metric("Students Enrolled", f"{total_students} 🎓")
+    with col_exec3.container(border=True):
+        st.metric("Families Reached", f"{families_approached} 🏘️")
+        
     st.divider()
     
+    st.write("### 🏢 Internal Operations Health")
+    
+    # Create exactly 2 equal columns for your existing charts
     col_chart1, col_chart2 = st.columns(2)
     
+    # Wrap the first chart in a responsive native box (Card 1)
     with col_chart1.container(border=True):
-        st.write("### Roster Breakdown by Department")
+        st.write("#### Roster Breakdown")
         dept_counts = df_master["Department"].value_counts()
-        # Adding a chart for department distribution with a color and container width
-        st.bar_chart(dept_counts, color="#2C3E50", use_container_width=True)
+        st.bar_chart(dept_counts, color="#2C3E50", use_container_width=True) 
         
+    # Wrap the second chart in a responsive native box (Card 2)
     with col_chart2.container(border=True):
-        st.write("### Standing Status Distribution")
+        st.write("#### Standing Status")
         status_counts = df_master["SOP_Status"].value_counts()
-        # Adding a bar chart for SOP_Status distribution with a specific color
         st.bar_chart(status_counts, color="#27AE60", use_container_width=True)
 
 # ------------------------------------------
