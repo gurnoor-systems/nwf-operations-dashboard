@@ -48,7 +48,7 @@ def load_directory():
 @st.cache_data(ttl=300)
 def load_drives_data():
 
-    return conn.read(spreadsheet=DRIVES_URL, worksheet="Drive_logs")
+    return conn.read(spreadsheet=DRIVES_URL, worksheet="Drive_log")
 
 try:
 # 1. Load the Strike Data
