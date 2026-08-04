@@ -29,6 +29,10 @@ def load_strike_summary():
 
 try:
     df_strikes = load_strike_summary()
+
+    # --- NEW FILTER LOGIC ---
+    # Drops any row where the Department column says "Void" (case-insensitive)
+    df_strikes = df_strikes[~df_strikes["Department"].str.contains("Void", case=False, na=False)]
     
     # Ensure numeric types for calculations
     df_strikes["Total_Strikes"] = pd.to_numeric(df_strikes["Total_Strikes"], errors="coerce").fillna(0)
