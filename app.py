@@ -72,8 +72,11 @@ try:
 
 # 3. Load Drives Impact Data
     df_drives = load_drives_data()
-    
+
 # 4. Drop empty rows that Google Sheets accidentally sends
+
+    # Strip invisible spaces from all column headers instantly
+    df_drives.columns = df_drives.columns.str.strip()
     df_drives = df_drives.dropna(subset=["Date"])
     # Convert Beneficiaries to a number so we can add them up
     df_drives["No. of Beneficiaries"] = pd.to_numeric(df_drives["No. of Beneficiaries"], errors="coerce").fillna(0)
