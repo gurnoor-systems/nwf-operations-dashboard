@@ -217,12 +217,37 @@ with tab_hr:
             }
         )
 
-    # ------------------------------------------
+# ------------------------------------------
 # TAB 4: FIELD OPERATIONS & IMPACT
 # ------------------------------------------
 with tab_impact:
-    st.title("Field Operations Data Explorer")
-    st.write("Raw data feed from the Drives Department:")
+    st.title("Field Operations & Community Impact")
+    st.write("Real-time metrics from the Drives Department.")
     
-    # displaying the raw dataframe just to see the columns
-    st.dataframe(df_drives, use_container_width=True)
+    # Calculate KPIs
+    completed_drives = len(df_drives[df_drives["Status"] == "Completed"])
+    total_beneficiaries = int(df_drives["No. of Beneficiaries"].sum())
+    unique_locations = df_drives["Date & Location"].nunique()
+    
+    # Render KPI Cards
+    col1, col2, col3 = st.columns(3)
+    with col1.container(border=True):
+        st.metric("Total Drives Executed", f"{completed_drives} 🚐")
+    with col2.container(border=True):
+        st.metric("Beneficiaries Impacted", f"{total_beneficiaries} 🤝")
+    with col3.container(border=True):
+        st.metric("Partner Locations", f"{unique_locations} 🏥")
+        
+    st.divider()
+    
+    # Render the cleaned table
+    st.write("### 📋 Recent Drive Logs")
+    st.dataframe(
+        df_drives[["Drive ID", "Date", "Date & Location", "Type of Care Home", "Status", "No. of Beneficiaries"]],
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Status": st.column_config.TextColumn("Status"),
+            "No. of Beneficiaries": st.column_config.NumberColumn("Beneficiaries", format="%d")
+        }
+    )
