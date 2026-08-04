@@ -70,9 +70,9 @@ except Exception as e:
 # 3. DASHBOARD TABS
 # ==========================================
 tab_exec, tab_dept, tab_hr = st.tabs([
-    "📈 Executive Pitch & Overview", 
+    "📈 Executive Overview", 
     "👥 Department Operations", 
-    "⚠️ HR & Strike Monitor"
+    "⚠️ HR Monitor"
 ])
 
 # ------------------------------------------
@@ -97,16 +97,17 @@ with tab_exec:
     
     col_chart1, col_chart2 = st.columns(2)
     
-    with col_chart1:
+    with col_chart1.container(border=True):
         st.write("### Roster Breakdown by Department")
         dept_counts = df_master["Department"].value_counts()
-        # Adding a custom color (e.g., a professional slate blue)
-        st.bar_chart(dept_counts, color="#2C3E50")
+        # Adding a chart for department distribution with a color and container width
+        st.bar_chart(dept_counts, color="#2C3E50", use_container_width=True)
         
-    with col_chart2:
+    with col_chart2.container(border=True):
         st.write("### Standing Status Distribution")
         status_counts = df_master["SOP_Status"].value_counts()
-        st.bar_chart(status_counts, color="#27AE60")
+        # Adding a bar chart for SOP_Status distribution with a specific color
+        st.bar_chart(status_counts, color="#27AE60", use_container_width=True)
 
 # ------------------------------------------
 # TAB 2: DEPARTMENT OPERATIONS (FILTERED)
