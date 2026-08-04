@@ -13,7 +13,7 @@ st.set_page_config(
 
 st.title("🛡️ Naunidh Welfare Foundation — Operations & Analytics Engine")
 st.caption("Live Operational Intelligence & Executive Impact Portal")
-st.markdown("---")
+st.divider()
 
 # ==========================================
 # 2. DATABASE CONNECTIONS & CACHED INGESTION
@@ -89,19 +89,20 @@ with tab_exec:
     col3.metric("Total Drive Logs", f"{total_events_logged} Logs")
     col4.metric("Active Departments", f"{df_master['Department'].nunique()}")
     
-    st.markdown("---")
+    st.divider()
     
     col_chart1, col_chart2 = st.columns(2)
     
     with col_chart1:
         st.write("### Roster Breakdown by Department")
         dept_counts = df_master["Department"].value_counts()
-        st.bar_chart(dept_counts)
+        # Adding a custom color (e.g., a professional slate blue)
+        st.bar_chart(dept_counts, color="#2C3E50")
         
     with col_chart2:
         st.write("### Standing Status Distribution")
         status_counts = df_master["SOP_Status"].value_counts()
-        st.bar_chart(status_counts)
+        st.bar_chart(status_counts, color="#27AE60")
 
 # ------------------------------------------
 # TAB 2: DEPARTMENT OPERATIONS (FILTERED)
