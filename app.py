@@ -31,6 +31,9 @@ ATTENDANCE_URL = "https://docs.google.com/spreadsheets/d/1FN3dwVcuEyTwjoQTsyY-AB
 # Add your 01_nwf_volunteerdirectory URL here:
 DIRECTORY_URL = "https://docs.google.com/spreadsheets/d/19X1b-B2nL5u02vhqxNAEcvdY9J_URo2lG1oTii58Mc0/edit"
 
+# PLACEHOLDER: Paste your Drive_log URL here (remember to delete the ?gid= part!)
+DRIVES_URL = "https://docs.google.com/spreadsheets/d/1wL81j3QWoHUO4_6AHA9BEnEhwzLe1KtHDIOceI446Og/edit"
+
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 @st.cache_data(ttl=300)
@@ -39,28 +42,36 @@ def load_strike_summary():
 
 @st.cache_data(ttl=300)
 def load_directory():
-    # Make sure "Sheet1" matches the exact tab name at the bottom of your directory file
+
     return conn.read(spreadsheet=DIRECTORY_URL, worksheet="Volunteer_Directory")
 
+@st.cache_data(ttl=300)
+def load_drives_data():
+
+    return conn.read(spreadsheet=DRIVES_URL, worksheet="Drive_logs")
+
 try:
-    # 1. Load the Strike Data
+# 1. Load the Strike Data
     df_master = load_strike_summary()
     df_master = df_master[~df_master["Department"].str.contains("Void", case=False, na=False)]
     
-    # 2. Load the Directory Data
+# 2. Load the Directory Data
     df_dir = load_directory()
     
-    # 3. Privacy Filter: Keep ONLY the Volunteer ID and Email (Drop Phone Numbers)
+    # 1. Privacy Filter: Keep ONLY the Volunteer ID and Email (Drop Phone Numbers)
     # Note: If your email column is named differently (e.g., "Email Address"), update it below
     df_dir_clean = df_dir[["Volunteer ID", "Contact (Email)"]] 
     
-    # 4. The Merge: Join the clean directory to the strike summary
+    # 2. The Merge: Joining the clean directory to the strike summary
     df_master = pd.merge(df_master, df_dir_clean, on="Volunteer ID", how="left")
     
-    # 5. Clean Data Types for Math
+    # 3. Clean Data Types
     df_master["Total_Strikes"] = pd.to_numeric(df_master["Total_Strikes"], errors="coerce").fillna(0)
     df_master["Total_Events"] = pd.to_numeric(df_master["Total_Events"], errors="coerce").fillna(0)
     df_master["Present"] = pd.to_numeric(df_master["Present"], errors="coerce").fillna(0)
+
+# 3. Load Drives Impact Data
+    df_drives = load_drives_data()
     
 except Exception as e:
     st.error(f"Failed to load database: {e}")
@@ -69,10 +80,11 @@ except Exception as e:
 # ==========================================
 # 3. DASHBOARD TABS
 # ==========================================
-tab_exec, tab_dept, tab_hr = st.tabs([
+tab_exec, tab_dept, tab_hr, tab_impact = st.tabs([
     "📈 Executive Overview", 
     "👥 Department Operations", 
-    "⚠️ HR Monitor"
+    "⚠️ HR Monitor",
+    "🌍 Field Operations & Impact"
 ])
 
 # ------------------------------------------
@@ -196,3 +208,13 @@ with tab_hr:
                 )
             }
         )
+
+    # ------------------------------------------
+# TAB 4: FIELD OPERATIONS & IMPACT
+# ------------------------------------------
+with tab_impact:
+    st.title("Field Operations Data Explorer")
+    st.write("Raw data feed from the Drives Department:")
+    
+    # displaying the raw dataframe just to see the columns
+    st.dataframe(df_drives, use_container_width=True)
