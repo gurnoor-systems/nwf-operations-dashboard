@@ -273,7 +273,7 @@ with tab_impact:
     )
 
 # ==========================================
-# TAB 5: EDUCATION DEPARTMENT METRICS
+# EDUCATION DEPARTMENT METRICS
 # ==========================================
     st.write("---")
     st.write("### 📚 Education Department Operations")
@@ -287,8 +287,9 @@ with tab_impact:
     with col_edu2.container(border=True):
         # We will map out active educators later, for now we leave a placeholder
         st.metric("Active Educators Deployed", "Live Tracking Pending 🧑‍🏫")
-        
-    st.write("#### 🛡️ Anonymized Student Roster")
+
+    st.write("---")
+    st.write("#### 🎓 Anonymized Student Roster")
     st.caption("Privacy Notice: PII (Phone numbers, Parent Names, Addresses) are strictly masked at the database level and omitted from this portal.")
     
     st.dataframe(
