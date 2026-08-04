@@ -5,6 +5,7 @@ from streamlit_gsheets import GSheetsConnection
 # ==========================================
 # 1. PAGE CONFIGURATION & STYLING
 # ==========================================
+
 st.set_page_config(
     page_title="NWF Executive Dashboard",
     page_icon="logo.png",
@@ -22,17 +23,14 @@ st.divider()
 # ==========================================
 # 2. DATABASE CONNECTIONS & CACHED INGESTION
 # ==========================================
-# Google Sheet URLs (Add additional departmental URLs here as needed)
-# ==========================================
-# 2. DATABASE CONNECTIONS & CACHED INGESTION
-# ==========================================
 
 ATTENDANCE_URL = "https://docs.google.com/spreadsheets/d/1FN3dwVcuEyTwjoQTsyY-ABKmXEQKk5CBsLs6dLXaAVQ/edit"
-# Add your 01_nwf_volunteerdirectory URL here:
+
 DIRECTORY_URL = "https://docs.google.com/spreadsheets/d/19X1b-B2nL5u02vhqxNAEcvdY9J_URo2lG1oTii58Mc0/edit"
 
-# PLACEHOLDER: Paste your Drive_log URL here (remember to delete the ?gid= part!)
 DRIVES_URL = "https://docs.google.com/spreadsheets/d/1wL81j3QWoHUO4_6AHA9BEnEhwzLe1KtHDIOceI446Og/edit"
+
+EDU_URL = "https://docs.google.com/spreadsheets/d/1YFmTWXJGH52kyLQ6lICeFbV0aOh7RZ9xZJK4nWfQUoc/edit"
 
 conn = st.connection("gsheets", type=GSheetsConnection)
 
@@ -42,13 +40,15 @@ def load_strike_summary():
 
 @st.cache_data(ttl=300)
 def load_directory():
-
     return conn.read(spreadsheet=DIRECTORY_URL, worksheet="Volunteer_Directory")
 
 @st.cache_data(ttl=300)
 def load_drives_data():
-
     return conn.read(spreadsheet=DRIVES_URL, worksheet="Drive_log")
+
+@st.cache_data(ttl=300)
+def load_education_master():
+    return conn.read(spreadsheet=EDU_URL, worksheet="Student Master File")
 
 try:
 # 1. Load the Strike Data
@@ -80,6 +80,21 @@ try:
     df_drives = df_drives.dropna(subset=["Date"])
     # Convert Beneficiaries to a number so we can add them up
     df_drives["No. of Beneficiaries"] = pd.to_numeric(df_drives["No. of Beneficiaries"], errors="coerce").fillna(0)
+
+# 5. Load Education Data & Apply Privacy Filter
+    df_edu = load_education_master()
+    
+    # Strip invisible spaces from headers (Defensive Engineering)
+    df_edu.columns = df_edu.columns.str.strip()
+    
+    # Define the strict list of PII columns that must not be sent to the UI
+    pii_columns = ["Parent/Guardian Contact", "Parents Name", "Address", "Background / Notes"]
+    
+    # Droping the PII columns
+    df_edu_safe = df_edu.drop(columns=pii_columns, errors='ignore')
+    
+    # Drop completely empty rows where a Student ID doesn't exist
+    df_edu_safe = df_edu_safe.dropna(subset=["Student ID"])
     
 except Exception as e:
     st.error(f"Failed to load database: {e}")
@@ -88,6 +103,7 @@ except Exception as e:
 # ==========================================
 # 3. DASHBOARD TABS
 # ==========================================
+
 tab_exec, tab_dept, tab_hr, tab_impact = st.tabs([
     "📈 Executive Overview", 
     "👥 Department Operations", 
@@ -98,6 +114,7 @@ tab_exec, tab_dept, tab_hr, tab_impact = st.tabs([
 # ------------------------------------------
 # TAB 1: EXECUTIVE PITCH & OVERVIEW
 # ------------------------------------------
+
 with tab_exec:
     st.subheader("Key Organizational Indicators (KPIs)")
     
@@ -132,6 +149,7 @@ with tab_exec:
 # ------------------------------------------
 # TAB 2: DEPARTMENT OPERATIONS (FILTERED)
 # ------------------------------------------
+
 with tab_dept:
     st.subheader("Departmental Roster Explorer")
     st.write("Department Heads can filter below to isolate and manage their specific team members.")
@@ -173,6 +191,7 @@ with tab_dept:
 # ------------------------------------------
 # TAB 3: HR & STRIKE MONITOR
 # ------------------------------------------
+
 with tab_hr:
     st.subheader("Compliance & Certificate Oversight")
     
@@ -220,6 +239,7 @@ with tab_hr:
 # ------------------------------------------
 # TAB 4: FIELD OPERATIONS & IMPACT
 # ------------------------------------------
+
 with tab_impact:
     st.title("Field Operations & Community Impact")
     st.write("Real-time metrics from the Drives Department.")
@@ -250,4 +270,29 @@ with tab_impact:
             "Status": st.column_config.TextColumn("Status"),
             "No. of Beneficiaries": st.column_config.NumberColumn("Beneficiaries", format="%d")
         }
+    )
+
+# ==========================================
+# TAB 5: EDUCATION DEPARTMENT METRICS
+# ==========================================
+    st.write("---")
+    st.write("### 📚 Education Department Operations")
+    
+    # Calculate Education KPIs
+    total_students = len(df_edu_safe)
+    
+    col_edu1, col_edu2 = st.columns(2)
+    with col_edu1.container(border=True):
+        st.metric("Total Enrolled Students", f"{total_students} 🎓")
+    with col_edu2.container(border=True):
+        # We will map out active educators later, for now we leave a placeholder
+        st.metric("Active Educators Deployed", "Live Tracking Pending 🧑‍🏫")
+        
+    st.write("#### 🛡️ Anonymized Student Roster")
+    st.caption("Privacy Notice: PII (Phone numbers, Parent Names, Addresses) are strictly masked at the database level and omitted from this portal.")
+    
+    st.dataframe(
+        df_edu_safe,
+        use_container_width=True,
+        hide_index=True
     )
