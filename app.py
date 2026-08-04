@@ -124,9 +124,24 @@ with tab_dept:
     
     # Render interactive, clean dataframe
     st.dataframe(
-        df_filtered[["Volunteer ID", "Full_Name","Contact (Email)", "Department", "Total_Events", "Present", "Attendance_Rate", "SOP_Status"]],
+        df_filtered[["Volunteer ID", "Full_Name", "Contact (Email)", "Department", "Total_Events", "Present", "Attendance_Rate", "SOP_Status"]],
         use_container_width=True,
-        hide_index=True
+        hide_index=True,
+        column_config={
+        "Volunteer ID": st.column_config.TextColumn("ID", width="small"),
+        "Full_Name": st.column_config.TextColumn("Volunteer Name", width="medium"),
+        "Contact (Email)": st.column_config.TextColumn("Email Address", width="medium"),
+        "Total_Events": st.column_config.NumberColumn("Total Events", format="%d 🗓️"),
+        "Attendance_Rate": st.column_config.ProgressColumn(
+            "Attendance Rate",
+            help="Percentage of events attended",
+            format="%.0f%%",
+            min_value=0,
+            max_value=100, # Assuming your math calculates out of 100
+        ),
+        "SOP_Status": st.column_config.TextColumn("Standing")
+        }
+    
     )
 
 # ------------------------------------------
@@ -145,8 +160,15 @@ with tab_hr:
             st.dataframe(
                 df_warnings[["Volunteer ID", "Full_Name", "Department", "Total_Strikes", "SOP_Status"]],
                 use_container_width=True,
-                hide_index=True
+                hide_index=True,
+                column_config={
+                    "Volunteer ID": st.column_config.TextColumn("ID"),
+                    "Full_Name": st.column_config.TextColumn("Volunteer Name"),
+                    "Total_Strikes": st.column_config.NumberColumn("⚠️ Strike Count", format="%d"),
+                    "SOP_Status": st.column_config.TextColumn("Current Standing")
+                }
             )
+
         else:
             st.success("No active strikes logged across the foundation!")
             
@@ -156,5 +178,15 @@ with tab_hr:
         st.dataframe(
             df_eligible[["Volunteer ID", "Full_Name", "Department", "Attendance_Rate"]],
             use_container_width=True,
-            hide_index=True
+            hide_index=True,
+            column_config={
+                "Volunteer ID": st.column_config.TextColumn("ID"),
+                "Full_Name": st.column_config.TextColumn("Volunteer Name"),
+                "Attendance_Rate": st.column_config.ProgressColumn(
+                    "Attendance Rate",
+                    format="%.0f%%",
+                    min_value=0,
+                    max_value=100
+                )
+            }
         )
