@@ -66,8 +66,6 @@ try:
 # 2. Load the Directory Data
     df_dir = load_directory()
     
-    # 1. Privacy Filter: Keep ONLY the Volunteer ID and Email (Drop Phone Numbers)
-    # Note: If your email column is named differently (e.g., "Email Address"), update it below
     df_dir_clean = df_dir[["Volunteer ID", "Contact (Email)"]] 
     
     # 2. The Merge: Joining the clean directory to the strike summary
