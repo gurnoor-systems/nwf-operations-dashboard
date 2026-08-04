@@ -7,13 +7,13 @@ from streamlit_gsheets import GSheetsConnection
 # ==========================================
 st.set_page_config(
     page_title="NWF Executive Dashboard",
-    page_icon="Logo (2).png",
+    page_icon="logo.png",
     layout="wide"
 )
 
 col_logo, col_title = st.columns([1, 11]) # The title column is 11x wider than the logo
 with col_logo:
-    st.image("Logo (2).png", use_container_width=True)
+    st.image("logo.png", use_container_width=True)
 with col_title:
     st.title("Naunidh Welfare Foundation — Analytical Dashboard")
     st.caption("Live Operational Intelligence & Executive Impact Portal")
