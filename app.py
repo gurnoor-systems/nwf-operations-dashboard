@@ -50,6 +50,14 @@ def load_drives_data():
 def load_education_master():
     return conn.read(spreadsheet=EDU_URL, worksheet="Student Master File")
 
+@st.cache_data(ttl=300)
+def load_education_survey():
+    return conn.read(spreadsheet=EDU_URL, worksheet="Survey Department Log")
+
+@st.cache_data(ttl=300)
+def load_education_log():
+    return conn.read(spreadsheet=EDU_URL, worksheet="Educating Log")
+
 try:
 # 1. Load the Strike Data
     df_master = load_strike_summary()
@@ -95,6 +103,17 @@ try:
     
     # Drop completely empty rows where a Student ID doesn't exist
     df_edu_safe = df_edu_safe.dropna(subset=["Student ID"])
+
+# 6. Load Survey Data
+    df_edu_survey = load_education_survey()
+    df_edu_survey.columns = df_edu_survey.columns.str.strip() # Defensive engineering
+    df_edu_survey = df_edu_survey.dropna(subset=["Date"])
+    df_edu_survey["Families Approached"] = pd.to_numeric(df_edu_survey["Families Approached"], errors="coerce").fillna(0)
+    
+# 7. Load Educating Log Data
+    df_edu_log = load_education_log()
+    df_edu_log.columns = df_edu_log.columns.str.strip()
+    df_edu_log = df_edu_log.dropna(subset=["Date"])
     
 except Exception as e:
     st.error(f"Failed to load database: {e}")
@@ -275,21 +294,28 @@ with tab_impact:
 # ==========================================
 # EDUCATION DEPARTMENT METRICS
 # ==========================================
+
     st.write("---")
     st.write("### 📚 Education Department Operations")
     
-    # Calculate Education KPIs
+    # Calculate Advanced Education KPIs
     total_students = len(df_edu_safe)
+    active_educators = df_edu_log["Educator ID"].nunique()
+    families_approached = int(df_edu_survey["Families Approached"].sum())
+    total_sessions = len(df_edu_log)
     
-    col_edu1, col_edu2 = st.columns(2)
+    # Render 4 Dynamic KPI Cards
+    col_edu1, col_edu2, col_edu3, col_edu4 = st.columns(4)
     with col_edu1.container(border=True):
-        st.metric("Total Enrolled Students", f"{total_students} 🎓")
+        st.metric("Enrolled Students", f"{total_students} 🧑‍🎓")
     with col_edu2.container(border=True):
-        # We will map out active educators later, for now we leave a placeholder
-        st.metric("Active Educators Deployed", "Live Tracking Pending 🧑‍🏫")
-
-    st.write("---")
-    st.write("#### 🎓 Anonymized Student Roster")
+        st.metric("Active Educators", f"{active_educators} 🧑‍🏫")
+    with col_edu3.container(border=True):
+        st.metric("Families Approached", f"{families_approached} 🏘️")
+    with col_edu4.container(border=True):
+        st.metric("Teaching Sessions", f"{total_sessions} 📝")
+        
+    st.write("#### 🧑‍🎓 Anonymized Student Roster")
     st.caption("Privacy Notice: PII (Phone numbers, Parent Names, Addresses) are strictly masked at the database level and omitted from this portal.")
     
     st.dataframe(
