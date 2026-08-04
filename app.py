@@ -36,7 +36,7 @@ def load_strike_summary():
 @st.cache_data(ttl=300)
 def load_directory():
     # Make sure "Sheet1" matches the exact tab name at the bottom of your directory file
-    return conn.read(spreadsheet=DIRECTORY_URL, worksheet="Sheet1") 
+    return conn.read(spreadsheet=DIRECTORY_URL, worksheet="Volunteer_Directory")
 
 try:
     # 1. Load the Strike Data
