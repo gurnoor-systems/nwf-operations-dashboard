@@ -143,7 +143,7 @@ with tab_hr:
         
         if len(df_warnings) > 0:
             st.dataframe(
-                df_warnings[["Volunteer ID", "Full_Name","Contact (Email)", "Department", "Total_Strikes", "SOP_Status"]],
+                df_warnings[["Volunteer ID", "Full_Name", "Department", "Total_Strikes", "SOP_Status"]],
                 use_container_width=True,
                 hide_index=True
             )
@@ -154,7 +154,7 @@ with tab_hr:
         st.write("### 🎓 Certificate Eligible (Good Standing)")
         df_eligible = df_master[df_master["SOP_Status"] == "GOOD STANDING"]
         st.dataframe(
-            df_eligible[["Volunteer ID", "Full_Name","Contact (Email)", "Department", "Attendance_Rate"]],
+            df_eligible[["Volunteer ID", "Full_Name", "Department", "Attendance_Rate"]],
             use_container_width=True,
             hide_index=True
         )
