@@ -128,6 +128,7 @@ tab_exec, tab_dept, tab_hr, tab_impact = st.tabs([
     "🌍 Field Operations & Impact"
 ])
 
+
 # ------------------------------------------
 # TAB 1: EXECUTIVE PITCH & OVERVIEW
 # ------------------------------------------
@@ -141,6 +142,9 @@ with tab_exec:
     total_students = len(df_edu_safe)
     families_approached = int(df_edu_survey["Families Approached"].sum())
     
+    # Calculate Active Volunteers (Since 'Void' members are already filtered out in Section 2)
+    active_volunteers = len(df_master)
+    
     # 2. Calculate the "Hero" Metric
     total_impact = total_beneficiaries + total_students + families_approached
     
@@ -148,13 +152,16 @@ with tab_exec:
     with st.container(border=True):
         st.metric("Total Community Members Impacted (Est.)", f"{total_impact} ❤️")
     
-    col_exec1, col_exec2, col_exec3 = st.columns(3)
+    # Include the volunteer workforce
+    col_exec1, col_exec2, col_exec3, col_exec4 = st.columns(4)
     with col_exec1.container(border=True):
         st.metric("Drive Beneficiaries", f"{total_beneficiaries} 🤝")
     with col_exec2.container(border=True):
         st.metric("Students Enrolled", f"{total_students} 🎓")
     with col_exec3.container(border=True):
         st.metric("Families Reached", f"{families_approached} 🏘️")
+    with col_exec4.container(border=True):
+        st.metric("Active Volunteers", f"{active_volunteers} 🛡️")
         
     st.divider()
     
