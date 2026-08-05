@@ -25,13 +25,10 @@ st.divider()
 # 2. DATABASE CONNECTIONS & CACHED INGESTION
 # ==========================================
 
-ATTENDANCE_URL = "https://docs.google.com/spreadsheets/d/1FN3dwVcuEyTwjoQTsyY-ABKmXEQKk5CBsLs6dLXaAVQ/edit"
-
-DIRECTORY_URL = "https://docs.google.com/spreadsheets/d/19X1b-B2nL5u02vhqxNAEcvdY9J_URo2lG1oTii58Mc0/edit"
-
-DRIVES_URL = "https://docs.google.com/spreadsheets/d/1wL81j3QWoHUO4_6AHA9BEnEhwzLe1KtHDIOceI446Og/edit"
-
-EDU_URL = "https://docs.google.com/spreadsheets/d/1YFmTWXJGH52kyLQ6lICeFbV0aOh7RZ9xZJK4nWfQUoc/edit"
+ATTENDANCE_URL = st.secrets["ATTENDANCE_URL"]
+DIRECTORY_URL = st.secrets["DIRECTORY_URL"]
+DRIVES_URL = st.secrets["DRIVES_URL"]
+EDU_URL = st.secrets["EDU_URL"]
 
 conn = st.connection("gsheets", type=GSheetsConnection)
 
