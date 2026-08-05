@@ -315,7 +315,7 @@ with tab_impact:
     # Calculate KPIs
     completed_drives = len(df_drives[df_drives["Status"] == "Completed"])
     total_beneficiaries = int(df_drives["No. of Beneficiaries"].sum())
-    unique_locations = df_drives["Date & Location"].nunique()
+    unique_locations = df_drives["Location"].nunique()
     
     # Render KPI Cards
     col1, col2, col3 = st.columns(3)
@@ -331,7 +331,7 @@ with tab_impact:
     # Render the cleaned table
     st.write("### 📋 Recent Drive Logs")
     st.dataframe(
-        df_drives[["Drive ID", "Date", "Date & Location", "Type of Care Home", "Status", "No. of Beneficiaries"]],
+        df_drives[["Drive ID", "Date", "Location", "Type of Care Home", "Status", "No. of Beneficiaries"]],
         use_container_width=True,
         hide_index=True,
         column_config={
