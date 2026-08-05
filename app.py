@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from streamlit_gsheets import GSheetsConnection
+import datetime
 
 # ==========================================
 # 1. PAGE CONFIGURATION & STYLING
@@ -35,36 +36,17 @@ EDU_URL = "https://docs.google.com/spreadsheets/d/1YFmTWXJGH52kyLQ6lICeFbV0aOh7R
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 @st.cache_data(ttl=300)
-def load_strike_summary():
-    return conn.read(spreadsheet=ATTENDANCE_URL, worksheet="Strike_Summary")
-
-@st.cache_data(ttl=300)
-def load_directory():
-    return conn.read(spreadsheet=DIRECTORY_URL, worksheet="Volunteer_Directory")
-
-@st.cache_data(ttl=300)
-def load_drives_data():
-    return conn.read(spreadsheet=DRIVES_URL, worksheet="Drive_log")
-
-@st.cache_data(ttl=300)
-def load_education_master():
-    return conn.read(spreadsheet=EDU_URL, worksheet="Student Master File")
-
-@st.cache_data(ttl=300)
-def load_education_survey():
-    return conn.read(spreadsheet=EDU_URL, worksheet="Survey Department Log")
-
-@st.cache_data(ttl=300)
-def load_education_log():
-    return conn.read(spreadsheet=EDU_URL, worksheet="Educating Log")
+def fetch_gsheet_data(url, sheet_name):
+    """Master function to fetch and cache data from any Google Sheet tab."""
+    return conn.read(spreadsheet=url, worksheet=sheet_name)
 
 try:
 # 1. Load the Strike Data
-    df_master = load_strike_summary()
+    df_master = fetch_gsheet_data(ATTENDANCE_URL, "Strike_Summary")
     df_master = df_master[~df_master["Department"].str.contains("Void", case=False, na=False)]
     
 # 2. Load the Directory Data
-    df_dir = load_directory()
+    df_dir = fetch_gsheet_data(DIRECTORY_URL, "Volunteer_Directory")
     
     df_dir_clean = df_dir[["Volunteer ID", "Contact (Email)"]] 
     
@@ -77,7 +59,7 @@ try:
     df_master["Present"] = pd.to_numeric(df_master["Present"], errors="coerce").fillna(0)
 
 # 3. Load Drives Impact Data
-    df_drives = load_drives_data()
+    df_drives = fetch_gsheet_data(DRIVES_URL, "Drive_log")
 
 # 4. Drop empty rows that Google Sheets accidentally sends
 
@@ -88,7 +70,7 @@ try:
     df_drives["No. of Beneficiaries"] = pd.to_numeric(df_drives["No. of Beneficiaries"], errors="coerce").fillna(0)
 
 # 5. Load Education Data & Apply Privacy Filter
-    df_edu = load_education_master()
+    df_edu = fetch_gsheet_data(EDU_URL, "Student Master File")
     
     # Strip invisible spaces from headers (Defensive Engineering)
     df_edu.columns = df_edu.columns.str.strip()
@@ -103,14 +85,22 @@ try:
     df_edu_safe = df_edu_safe.dropna(subset=["Student ID"])
 
 # 6. Load Survey Data
-    df_edu_survey = load_education_survey()
+    df_edu_survey = fetch_gsheet_data(EDU_URL, "Survey Department Log")
     df_edu_survey.columns = df_edu_survey.columns.str.strip() # Defensive engineering
     df_edu_survey = df_edu_survey.dropna(subset=["Date"])
     df_edu_survey["Families Approached"] = pd.to_numeric(df_edu_survey["Families Approached"], errors="coerce").fillna(0)
     
 # 7. Load Educating Log Data
-    df_edu_log = load_education_log()
+    df_edu_log = fetch_gsheet_data(EDU_URL, "Educating Log")
     df_edu_log.columns = df_edu_log.columns.str.strip()
+    df_edu_log = df_edu_log.dropna(subset=["Date"])
+
+    df_drives["Date"] = pd.to_datetime(df_drives["Date"], errors="coerce")
+    df_edu_survey["Date"] = pd.to_datetime(df_edu_survey["Date"], errors="coerce")
+    df_edu_log["Date"] = pd.to_datetime(df_edu_log["Date"], errors="coerce")
+
+    df_drives = df_drives.dropna(subset=["Date"])
+    df_edu_survey = df_edu_survey.dropna(subset=["Date"])
     df_edu_log = df_edu_log.dropna(subset=["Date"])
     
 except Exception as e:
@@ -118,7 +108,45 @@ except Exception as e:
     st.stop()
 
 # ==========================================
-# 3. DASHBOARD TABS
+# 3. GLOBAL EXECUTIVE CONTROL PANEL
+# ==========================================
+
+st.sidebar.header("🎛️ Global Filters")
+st.sidebar.caption("Isolate operational velocity by time and department.")
+
+# 1. Date Range Filter
+default_start = datetime.date(2026, 1, 6) 
+default_end = datetime.datetime.now().date()
+
+date_range = st.sidebar.date_input(
+    "📅 Filter by Date Range",
+    (default_start, default_end)
+)
+
+# 2. Department Filter
+departments = df_master["Department"].dropna().unique().tolist()
+selected_depts = st.sidebar.multiselect(
+    "👥 Filter HR by Department", 
+    departments, 
+    default=departments
+)
+
+# 3. Apply Filters to the DataFrames
+df_master = df_master[df_master["Department"].isin(selected_depts)]
+
+# Safely filter the time-series data if both a start and end date are selected
+if len(date_range) == 2:
+    start_date, end_date = date_range
+    # Convert inputs to pandas datetime for accurate mathematical comparison
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+    
+    df_drives = df_drives[(df_drives["Date"] >= start_date) & (df_drives["Date"] <= end_date)]
+    df_edu_survey = df_edu_survey[(df_edu_survey["Date"] >= start_date) & (df_edu_survey["Date"] <= end_date)]
+    df_edu_log = df_edu_log[(df_edu_log["Date"] >= start_date) & (df_edu_log["Date"] <= end_date)]
+
+# ==========================================
+# 4. DASHBOARD TABS
 # ==========================================
 
 tab_exec, tab_dept, tab_hr, tab_impact = st.tabs([
@@ -128,27 +156,27 @@ tab_exec, tab_dept, tab_hr, tab_impact = st.tabs([
     "🌍 Field Operations & Impact"
 ])
 
-
 # ------------------------------------------
-# TAB 1: EXECUTIVE PITCH & OVERVIEW
+# TAB 1: PITCH & OVERVIEW
 # ------------------------------------------
-
 with tab_exec:
     st.write("### 🌍 Global Foundation Impact")
     st.caption("Aggregated community impact metrics across all active field operations.")
     
-    # 1. Calculate Global Impact Metrics
     total_beneficiaries = int(df_drives["No. of Beneficiaries"].sum())
     total_students = len(df_edu_safe)
     families_approached = int(df_edu_survey["Families Approached"].sum())
-    
-    # 2. Calculate the "Hero" Metric
     total_impact = total_beneficiaries + total_students + families_approached
+    total_volunteers = len(df_master)
     
-    # 3. Render the Hero Section
-    with st.container(border=True):
+    # Hero Section
+    col_hero1, col_hero2 = st.columns(2)
+    with col_hero1.container(border=True):
         st.metric("Total Community Members Impacted (Est.)", f"{total_impact} ❤️")
+    with col_hero2.container(border=True):
+        st.metric("Active Volunteer Roster", f"{total_volunteers} 👥")
     
+    # Sub-Metrics
     col_exec1, col_exec2, col_exec3 = st.columns(3)
     with col_exec1.container(border=True):
         st.metric("Drive Beneficiaries", f"{total_beneficiaries} 🤝")
@@ -158,23 +186,36 @@ with tab_exec:
         st.metric("Families Reached", f"{families_approached} 🏘️")
         
     st.divider()
+
+    # Cumulative Impact Trajectory Chart
+    st.write("### 📈 Cumulative Impact Trajectory")
+    st.caption("Month-over-month growth of community members directly supported.")
+    
+    if not df_drives.empty:
+        timeline_df = df_drives.groupby("Date")["No. of Beneficiaries"].sum().reset_index()
+        timeline_df = timeline_df.sort_values("Date")
+        timeline_df["Cumulative Beneficiaries"] = timeline_df["No. of Beneficiaries"].cumsum()
+        st.line_chart(timeline_df.set_index("Date")["Cumulative Beneficiaries"], color="#E74C3C", use_container_width=True)
+    else:
+        st.info("No field operations data available for the selected date range.")
+
+    st.divider()
     
     st.write("### 🏢 Internal Operations Health")
-    
-    # Create exactly 2 equal columns for your existing charts
+
     col_chart1, col_chart2 = st.columns(2)
-    
-    # Wrap the first chart in a responsive native box (Card 1)
-    with col_chart1.container(border=True):
-        st.write("#### Roster Breakdown")
-        dept_counts = df_master["Department"].value_counts()
-        st.bar_chart(dept_counts, color="#2C3E50", use_container_width=True) 
         
-    # Wrap the second chart in a responsive native box (Card 2)
+        # Wrap the first chart in a responsive native box (Card 1)
+    with col_chart1.container(border=True):
+            st.write("#### Roster Breakdown")
+            dept_counts = df_master["Department"].value_counts()
+            st.bar_chart(dept_counts, color="#2C3E50", use_container_width=True) 
+            
+        # Wrap the second chart in a responsive native box (Card 2)
     with col_chart2.container(border=True):
-        st.write("#### Standing Status")
-        status_counts = df_master["SOP_Status"].value_counts()
-        st.bar_chart(status_counts, color="#27AE60", use_container_width=True)
+            st.write("#### Standing Status")
+            status_counts = df_master["SOP_Status"].value_counts()
+            st.bar_chart(status_counts, color="#27AE60", use_container_width=True)
 
 # ------------------------------------------
 # TAB 2: DEPARTMENT OPERATIONS (FILTERED)
@@ -196,7 +237,7 @@ with tab_dept:
         
     st.write(f"Showing **{len(df_filtered)}** team members in **{selected_dept}**:")
     
-    # Render interactive, clean dataframe
+    # Render Clean dataframe
     st.dataframe(
         df_filtered[["Volunteer ID", "Full_Name", "Contact (Email)", "Department", "Total_Events", "Present", "Attendance_Rate", "SOP_Status"]],
         use_container_width=True,
@@ -211,7 +252,7 @@ with tab_dept:
             help="Percentage of events attended",
             format="%.0f%%",
             min_value=0,
-            max_value=100, # Assuming your math calculates out of 100
+            max_value=100,
         ),
         "SOP_Status": st.column_config.TextColumn("Standing")
         }
@@ -297,6 +338,7 @@ with tab_impact:
         use_container_width=True,
         hide_index=True,
         column_config={
+            "Date": st.column_config.DateColumn("Drive Date", format="MMM DD, YYYY"),
             "Status": st.column_config.TextColumn("Status"),
             "No. of Beneficiaries": st.column_config.NumberColumn("Beneficiaries", format="%d")
         }
