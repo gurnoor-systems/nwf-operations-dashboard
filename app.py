@@ -171,7 +171,7 @@ with tab_exec:
     with col_hero1.container(border=True):
         st.metric("Total Community Members Impacted (Est.)", f"{total_impact} ❤️")
     with col_hero2.container(border=True):
-        st.metric("Active Volunteer Roster", f"{total_volunteers} 👥")
+        st.metric("Active Volunteers", f"{total_volunteers} 👥")
     
     # Sub-Metrics
     col_exec1, col_exec2, col_exec3 = st.columns(3)
@@ -180,7 +180,7 @@ with tab_exec:
     with col_exec2.container(border=True):
         st.metric("Students Enrolled", f"{total_students} 🎓")
     with col_exec3.container(border=True):
-        st.metric("Families Reached", f"{families_approached} 🏘️")
+        st.metric("Families Approached", f"{families_approached} 🏘️")
         
     st.divider()
 
